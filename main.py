@@ -166,7 +166,7 @@ while True:
 
             while True:
                 response = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4",
                     messages=messages,
                     functions=functions,
                     function_call="auto",
