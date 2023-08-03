@@ -6,6 +6,7 @@ import openai
 import os
 from dotenv import load_dotenv
 import json
+from typing import List
 
 load_dotenv()  
 
