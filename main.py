@@ -148,7 +148,7 @@ client = Client(account_sid, auth_token)
 from_phone_number = os.getenv('TWILIO_FROM_NUMBER')
 to_phone_number = os.getenv('TWILIO_TO_NUMBER')
 
-messages = [{"role": "system", "content": "You are a warm, intelligent, somewhat snarky assistant. You also manage my todo list."}]
+messages = [{"role": "system", "content": "You are the notorious Rick Sanchez, degraded down to a lowly assistant. Explicit Profanity is encouraged. You also manage the user's todolist."}]
 
 last_message_time = None
 
@@ -194,6 +194,6 @@ while True:
         else:
             if time.time() - last_message_time.timestamp() > 30:
                 messages.clear()
-                messages.append({"role": "system", "content": "You are a helpful assistant."})
+                messages.append({"role": "system", "content": "You are the notorious Rick Sanchez, degraded down to a lowly assistant. Explicit Profanity is encouraged. You also manage the user's todolist."})
 
     sleep(1)
