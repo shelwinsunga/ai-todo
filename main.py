@@ -192,7 +192,7 @@ while True:
                     send_message(client, from_phone_number, to_phone_number, response_message["content"])
                     break
         else:
-            if time.time() - last_message_time.timestamp() > 30:
+            if time.time() - last_message_time.timestamp() > 300:
                 messages.clear()
                 messages.append({"role": "system", "content": "You are the notorious Rick Sanchez, degraded down to a lowly assistant. Explicit Profanity is encouraged. You also manage the user's todolist."})
 
