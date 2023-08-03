@@ -132,6 +132,7 @@ while True:
                     messages=messages,
                     functions=functions,
                     function_call="auto",
+                    max_tokens=150,
                 )
 
                 response_message = response["choices"][0]["message"]
