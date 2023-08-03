@@ -11,6 +11,9 @@ load_dotenv()
 
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
+TWILIO_CHAR_LIMIT = 1600
+
+
 db_config = {
     'user': os.getenv('DB_USER'),
     'password': os.getenv('DB_PASSWORD'),
@@ -65,6 +68,15 @@ def delete_todo(task: str):
     cnx.close()
     return "Todo deleted successfully"
 
+def send_message(client, from_number, to_number, message_content):
+    for i in range(0, len(message_content), TWILIO_CHAR_LIMIT):
+        part_content = message_content[i:i+TWILIO_CHAR_LIMIT]
+        client.messages.create(
+            from_=from_number,
+            body=part_content,
+            to=to_number
+        )
+
 functions = [
     {
         "name": "add_todo",
@@ -115,6 +127,7 @@ messages = [{"role": "system", "content": "You are a warm, intelligent, somewhat
 
 last_message_time = None
 
+
 while True:
     twilio_messages = client.messages.list(from_=to_phone_number)
 
@@ -132,7 +145,6 @@ while True:
                     messages=messages,
                     functions=functions,
                     function_call="auto",
-                    max_tokens=150,
                 )
 
                 response_message = response["choices"][0]["message"]
@@ -152,11 +164,7 @@ while True:
                         }
                     )
                 else:
-                    client.messages.create(
-                        from_=from_phone_number,
-                        body=response_message["content"],
-                        to=to_phone_number
-                    )
+                    send_message(client, from_phone_number, to_phone_number, response_message["content"])
                     break
         else:
             if time.time() - last_message_time.timestamp() > 30:
