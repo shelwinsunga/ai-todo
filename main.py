@@ -1,3 +1,6 @@
+from twilio.rest import Client
+from time import sleep
+import time
 import mysql.connector
 import openai
 import os
@@ -8,7 +11,6 @@ load_dotenv()
 
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# MySQL connection details.
 db_config = {
     'user': os.getenv('DB_USER'),
     'password': os.getenv('DB_PASSWORD'),
@@ -63,7 +65,6 @@ def delete_todo(task: str):
     cnx.close()
     return "Todo deleted successfully"
 
-# Define the functions that the AI model can call
 functions = [
     {
         "name": "add_todo",
@@ -97,44 +98,68 @@ functions = [
     }
 ]
 
-
 available_functions = {
     "add_todo": add_todo,
     "get_todos": get_todos,
     "delete_todo": delete_todo,
 }
 
+account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+client = Client(account_sid, auth_token)
 
-messages = [{"role": "system", "content": "You are a helpful assistant."}]
+from_phone_number = os.getenv('TWILIO_FROM_NUMBER')
+to_phone_number = os.getenv('TWILIO_TO_NUMBER')
+
+messages = [{"role": "system", "content": "You are a warm, intelligent, somewhat snarky assistant. You also manage my todo list."}]
+
+last_message_time = None
 
 while True:
-    user_input = input("You: ")
-    messages.append({"role": "user", "content": user_input})
-    
-    while True:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=messages,
-            functions=functions,
-            function_call="auto",  
-        )
+    twilio_messages = client.messages.list(from_=to_phone_number)
 
-        response_message = response["choices"][0]["message"]
-        messages.append(response_message)  
+    if twilio_messages:
+        most_recent_message = twilio_messages[0]
 
-        if response_message.get("function_call"):
-            function_name = response_message["function_call"]["name"]
-            function_to_call = available_functions[function_name]
-            function_args = json.loads(response_message["function_call"]["arguments"])
-            function_response = function_to_call(**function_args)
+        if not last_message_time or most_recent_message.date_created > last_message_time:
+            last_message_time = most_recent_message.date_created
+            user_input = most_recent_message.body
+            messages.append({"role": "user", "content": user_input})
 
-            messages.append(
-                {
-                    "role": "function",
-                    "name": function_name,
-                    "content": function_response,
-                }
-            ) 
+            while True:
+                response = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=messages,
+                    functions=functions,
+                    function_call="auto",
+                )
+
+                response_message = response["choices"][0]["message"]
+                messages.append(response_message)
+
+                if response_message.get("function_call"):
+                    function_name = response_message["function_call"]["name"]
+                    function_to_call = available_functions[function_name]
+                    function_args = json.loads(response_message["function_call"]["arguments"])
+                    function_response = function_to_call(**function_args)
+
+                    messages.append(
+                        {
+                            "role": "function",
+                            "name": function_name,
+                            "content": function_response,
+                        }
+                    )
+                else:
+                    client.messages.create(
+                        from_=from_phone_number,
+                        body=response_message["content"],
+                        to=to_phone_number
+                    )
+                    break
         else:
-            print("AI: ", response_message["content"])
-            break
+            if time.time() - last_message_time.timestamp() > 30:
+                messages.clear()
+                messages.append({"role": "system", "content": "You are a helpful assistant."})
+
+    sleep(1)
