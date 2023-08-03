@@ -1,0 +1,1 @@
+This is a simple AI-powered todo app that demonstrates flexible function calling via the OpenAI API. It is configured to use a MYSQL database, I personally host it on railway, and the SMS script is configured to use twilio.
