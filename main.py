@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import json
 
-load_dotenv()  # load environment variables from .env file
+load_dotenv()  
 
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
@@ -51,9 +51,7 @@ def get_todos():
     results = cursor.fetchall()
     cursor.close()
     cnx.close()
-    # Convert the list of todos to a string
-    # return in a formatted way so that the AI model can read it
-    return '\n TODO LIST: \n' + '\n'.join(result[1] for result in results)  # assuming that the task is the second column in the results
+    return '\n TODO LIST: \n' + '\n'.join(result[1] for result in results)
 
 def delete_todo(task: str):
     cnx = mysql.connector.connect(**db_config)
@@ -100,7 +98,6 @@ functions = [
 ]
 
 
-# The available functions that the AI model can call
 available_functions = {
     "add_todo": add_todo,
     "get_todos": get_todos,
@@ -108,10 +105,8 @@ available_functions = {
 }
 
 
-# Initialize the messages list outside the while loop
 messages = [{"role": "system", "content": "You are a helpful assistant."}]
 
-# Start a conversation with the user
 while True:
     user_input = input("You: ")
     messages.append({"role": "user", "content": user_input})
@@ -139,7 +134,7 @@ while True:
                     "name": function_name,
                     "content": function_response,
                 }
-            )  # extend conversation with function response
+            ) 
         else:
             print("AI: ", response_message["content"])
             break
