@@ -38,15 +38,16 @@ def create_todo_table():
 
 create_todo_table()
 
-def add_todo(task: str):
+def add_todos(tasks: List[str]):
     cnx = mysql.connector.connect(**db_config)
     cursor = cnx.cursor()
     query = "INSERT INTO todos (task) VALUES (%s)"
-    cursor.execute(query, (task,))
+    for task in tasks:
+        cursor.execute(query, (task,))
     cnx.commit()
     cursor.close()
     cnx.close()
-    return "Todo added successfully"
+    return "Todos added successfully"
 
 def get_todos():
     cnx = mysql.connector.connect(**db_config)
@@ -58,15 +59,27 @@ def get_todos():
     cnx.close()
     return '\n TODO LIST: \n' + '\n'.join(result[1] for result in results)
 
-def delete_todo(task: str):
+def delete_todos(tasks: List[str]):
     cnx = mysql.connector.connect(**db_config)
     cursor = cnx.cursor()
     query = "DELETE FROM todos WHERE task = %s"
-    cursor.execute(query, (task,))
+    for task in tasks:
+        cursor.execute(query, (task,))
     cnx.commit()
     cursor.close()
     cnx.close()
-    return "Todo deleted successfully"
+    return "Todos deleted successfully"
+
+def delete_all_todos():
+    cnx = mysql.connector.connect(**db_config)
+    cursor = cnx.cursor()
+    query = "DELETE FROM todos"
+    cursor.execute(query)
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+    return "All todos deleted successfully"
+
 
 def send_message(client, from_number, to_number, message_content):
     for i in range(0, len(message_content), TWILIO_CHAR_LIMIT):
@@ -79,14 +92,14 @@ def send_message(client, from_number, to_number, message_content):
 
 functions = [
     {
-        "name": "add_todo",
-        "description": "Add a todo item",
+        "name": "add_todos",
+        "description": "Add todo items",
         "parameters": {
             "type": "object",
             "properties": {
-                "task": {"type": "string"}
+                "tasks": {"type": "array", "items": {"type": "string"}}
             },
-            "required": ["task"],
+            "required": ["tasks"],
         },
     },
     {
@@ -98,22 +111,33 @@ functions = [
         }
     },
     {
-        "name": "delete_todo",
-        "description": "Delete a todo item",
+        "name": "delete_todos",
+        "description": "Delete todo items",
         "parameters": {
             "type": "object",
             "properties": {
-                "task": {"type": "string"}
+                "tasks": {"type": "array", "items": {"type": "string"}}
             },
-            "required": ["task"],
+            "required": ["tasks"],
         },
+    },
+    {
+    "name": "delete_all_todos",
+    "description": "Delete all todo items",
+    "parameters": {
+        "type": "object",
+        "properties": {}
     }
+}
+
 ]
 
+
 available_functions = {
-    "add_todo": add_todo,
+    "add_todos": add_todos,
     "get_todos": get_todos,
-    "delete_todo": delete_todo,
+    "delete_todos": delete_todos,
+    "delete_all_todos": delete_all_todos
 }
 
 account_sid = os.getenv('TWILIO_ACCOUNT_SID')
